@@ -16,5 +16,13 @@
 		"psr-4": {
 			"birkholz\\di\\": "src/"
 		}
+	},
+	
+	"require": {
+		"psr/log": "*"
+	},
+	
+	"require-dev": {
+		"monolog/monolog": "~1.11@dev"
 	}
 }

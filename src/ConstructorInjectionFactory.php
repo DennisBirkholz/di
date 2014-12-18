@@ -51,11 +51,11 @@ class ConstructorInjectionFactory implements FactoryInterface {
 	/**
 	 * {@inheritdoc}
 	 */
-	public function create(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = []) {
+	public function create(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = array()) {
 		$this->initialize();
 		
 		// Real argument list used for the constructor
-		$realArgs = [];
+		$realArgs = array();
 		
 		// Resolve all parameters
 		foreach ($this->parameters as $parameterPos => $parameter) {
@@ -116,16 +116,16 @@ class ConstructorInjectionFactory implements FactoryInterface {
 		
 		// No constructor exists, so just instantiate the class
 		if (null === ($constructor = $reflectionClass->getConstructor())) {
-			$this->parameters = [];
+			$this->parameters = array();
 			return;
 		}
 		
 		/* @var $parameter \ReflectionParameter */
 		foreach ($constructor->getParameters() as $parameter) {
-			$setting = [
+			$setting = array(
 				'name' => $parameter->getName(),
 				'optional' => $parameter->isOptional(),
-			];
+			);
 			
 			if (null !== ($requiredClass = $parameter->getClass())) {
 				$setting['class'] = $requiredClass->getName();

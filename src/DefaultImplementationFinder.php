@@ -66,11 +66,11 @@ class DefaultImplementationFinder {
 		$this->logger->debug('Using basename "' . $basename . '"');
 		
 		// Pre and postfix pairs to try to build classnames from
-		$preAndPostfixes = [
-			[ 'Default', '', ],
-			[ 'Default', 'Impl', ],
-			[ 'Null', '', ],
-		];
+		$preAndPostfixes = array(
+			array( 'Default', '', ),
+			array( 'Default', 'Impl', ),
+			array( 'Null', '', ),
+		);
 		
 		// Check if constructed class names exist and implement the interface
 		foreach ($preAndPostfixes as $preAndPostfix) {

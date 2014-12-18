@@ -34,7 +34,7 @@ class DependencyContainer {
 	 * 
 	 * @var array<callable>
 	 */
-	private $factories = [];
+	private $factories = array();
 	
 	/**
 	 * Factory callback for a dependency.
@@ -42,7 +42,7 @@ class DependencyContainer {
 	 * 
 	 * @var array<callable>
 	 */
-	private $constructors = [];
+	private $constructors = array();
 	
 	/**
 	 * Flag to mark dependencies as singletons.
@@ -50,7 +50,7 @@ class DependencyContainer {
 	 * 
 	 * @var array<boolean>
 	 */
-	private $singleton = [];
+	private $singleton = array();
 	
 	/**
 	 * Provides a mapping of a dependency is locked and can not be changed.
@@ -58,7 +58,7 @@ class DependencyContainer {
 	 * 
 	 * @var array<boolean>
 	 */
-	private $locked = [];
+	private $locked = array();
 	
 	/**
 	 * Provides a mapping from dependency names to the names of classes that can be instantiated.
@@ -66,7 +66,7 @@ class DependencyContainer {
 	 * 
 	 * @var array<string>
 	 */
-	private $implementations = [];
+	private $implementations = array();
 	
 	/**
 	 * List of created objects.
@@ -74,14 +74,14 @@ class DependencyContainer {
 	 * 
 	 * @var array<object>
 	 */
-	private $instances = [];
+	private $instances = array();
 	
 	/**
 	 * List of configuration parameters stored in the container.
 	 * 
 	 * @var array<string>
 	 */
-	private $config = [];
+	private $config = array();
 	
 	
 	
@@ -113,10 +113,10 @@ class DependencyContainer {
 			$constructorArgs = \func_get_args();
 			\array_shift($constructorArgs);
 		} else {
-			$constructorArgs = [];
+			$constructorArgs = array();
 		}
 		
-		$injected = [];
+		$injected = array();
 		return $constructor($this, $injected, $constructorArgs);
 	}
 	
@@ -183,7 +183,7 @@ class DependencyContainer {
 	 */
 	public function tryCreate($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
 		try {
-			return \call_user_func_array([$this, 'create'], \func_get_args());
+			return \call_user_func_array(array($this, 'create'), \func_get_args());
 		} catch (\Exception $ex) {
 			return false;
 		}
@@ -257,7 +257,7 @@ class DependencyContainer {
 			throw new \RuntimeException('Can not change factory method for already instantiated singleton "' . $dependencyName . '".');
 		}
 		
-		$this->factories[$dependencyName] = [new CallbackFactory($dependencyName, $factory), 'create'];
+		$this->factories[$dependencyName] = array(new CallbackFactory($dependencyName, $factory), 'create');
 		unset($this->constructors[$dependencyName]);
 		
 		return $this;
@@ -285,5 +285,18 @@ class DependencyContainer {
 			$this->config[$name] = $value;
 			return $this;
 		}
+	}
+	
+	/**
+	 * Set the implementation a dependency uses.
+	 * 
+	 * @param string $dependencyName
+	 * @param string $className
+	 * @return \birkholz\di\DependencyContainer $this for chaining
+	 * @api
+	 */
+	public function uses($dependencyName, $className) {
+		$this->implementations[$dependencyName] = $className;
+		return $this;
 	}
 }

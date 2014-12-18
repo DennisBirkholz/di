@@ -36,7 +36,7 @@ class CallbackFactory implements FactoryInterface {
 	/**
 	 * {@inheritdoc}
 	 */
-	public function create(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = []) {
+	public function create(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = array()) {
 		\array_unshift($constructorArgs, $di);
 		return \call_user_func_array($this->callback, $constructorArgs);
 	}

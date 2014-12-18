@@ -3,6 +3,12 @@
 	xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.3/phpunit.xsd"
 	bootstrap="test/bootstrap.php"
 >
+	<testsuites>
+		<testsuite name="DI Test Suite">
+			<directory>test</directory>
+		</testsuite>
+	</testsuites>
+	
 	<filter>
 		<blacklist>
 			<directory suffix=".php">vendor/</directory>

@@ -213,7 +213,7 @@ class DependencyContainer {
 	public function tryGet($dependencyName) {
 		try {
 			return $this->get($dependencyName);
-		} catch (Exception $ex) {
+		} catch (\Exception $ex) {
 			return false;
 		}
 	}

@@ -34,5 +34,5 @@ interface FactoryInterface {
 	 * @param array &$injectionStatus
 	 * @param array $constructorArgs
 	 */
-	public function create(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = array());
+	public function __invoke(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = array());
 }

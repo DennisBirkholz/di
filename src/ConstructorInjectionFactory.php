@@ -51,7 +51,7 @@ class ConstructorInjectionFactory implements FactoryInterface {
 	/**
 	 * {@inheritdoc}
 	 */
-	public function create(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = array()) {
+	public function __invoke(DependencyContainer $di, array &$injectionStatus, array $constructorArgs = array()) {
 		$this->initialize();
 		
 		// Real argument list used for the constructor
@@ -64,13 +64,13 @@ class ConstructorInjectionFactory implements FactoryInterface {
 				// Next supplied parameter fulfills dependency
 				if (isset($constructorArgs[0]) && \is_a($constructorArgs[0], $parameter['class'])) {
 					$realArgs[] = \array_shift($constructorArgs);
-					$injectionStatus[] = $parameter['class'];
+					$injectionStatus[$parameter['class']] = true;
 				}
 				
 				// Use container to get dependency
 				elseif (false !== ($dependencyInstance = $di->tryCreate($parameter['class']))) {
 					$realArgs[] = $dependencyInstance;
-					$injectionStatus[] = $parameter['class'];
+					$injectionStatus[$parameter['class']] = true;
 				}
 
 				elseif ($parameter['optional']) {

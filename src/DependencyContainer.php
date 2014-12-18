@@ -133,7 +133,7 @@ class DependencyContainer {
 		}
 		
 		if (isset($this->factories[$dependencyName])) {
-			$this->constructors[$dependencyName] = array(new CallbackFactory($dependencyName, $this->factories[$dependencyName]), 'create');
+			$this->constructors[$dependencyName] = $this->factoryFactory($dependencyName, $this->factories[$dependencyName]);
 			return $this->constructors[$dependencyName];
 		}
 		
@@ -144,7 +144,7 @@ class DependencyContainer {
 		
 		// Dependency is a class, so create a factory and use that
 		if (\class_exists($dependencyName)) {
-			$this->constructors[$dependencyName] = array(new ConstructorInjectionFactory($dependencyName), 'create');
+			$this->constructors[$dependencyName] = $this->factoryFactory($dependencyName);
 			return $this->constructors[$dependencyName];
 		}
 		
@@ -293,5 +293,24 @@ class DependencyContainer {
 	public function uses($dependencyName, $className) {
 		$this->implementations[$dependencyName] = $className;
 		return $this;
+	}
+	
+	/**
+	 * Create a new factory for the supplied dependency name.
+	 * A factory may be used that wraps the supplied callback.
+	 * Otherwise a default constructor injection factory is used.
+	 * 
+	 * @param string $dependencyName
+	 * @param callable $callback (optional)
+	 * @return \birkholz\di\FactoryInterface
+	 */
+	private function factoryFactory($dependencyName, callable $callback = null) {
+		if (null !== $callback) {
+			return new CallbackFactory($dependencyName, $this->factories[$dependencyName]);
+		}
+		
+		else {
+			return new ConstructorInjectionFactory($dependencyName);
+		}
 	}
 }

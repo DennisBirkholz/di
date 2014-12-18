@@ -11,13 +11,6 @@
 
 namespace birkholz\di;
 
-use \birkholz\di\tests\ConstructorInjectionClass;
-use \birkholz\di\tests\ConstructorInjectionClassWithAdditionalParams;
-use \birkholz\di\tests\ConstructorInjectionClassWithOptionalParameters;
-
-use \birkholz\di\dummy\Dummy1Interface;
-use \birkholz\di\dummy\Dummy2Interface;
-use \birkholz\di\dummy\Dummy3Interface;
 use \birkholz\di\dummy\DefaultDummy1;
 use \birkholz\di\dummy\DefaultDummy2Impl;
 use \birkholz\di\dummy\NullDummy3;
@@ -33,13 +26,13 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function testConstructorInjection() {
-		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
+		$di = new DependencyContainer();
 		
-		$instance = $di->create(ConstructorInjectionClass::class);
-		$this->assertInstanceOf(ConstructorInjectionClass::class, $instance);
-		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
-		$this->assertInstanceOf(Dummy2Interface::class, $instance->dummy2);
-		$this->assertInstanceOf(Dummy3Interface::class, $instance->dummy3);
+		$instance = $di->create('birkholz\\di\\tests\\ConstructorInjectionClass');
+		$this->assertInstanceOf('birkholz\\di\\tests\\ConstructorInjectionClass', $instance);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy1Interface', $instance->dummy1);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy2Interface', $instance->dummy2);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy3Interface', $instance->dummy3);
 	}
 	
 	/**
@@ -49,16 +42,16 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function testConstructorInjectionWithSuppliedDependencies() {
-		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
+		$di = new DependencyContainer();
 		
 		$dummy1 = new DefaultDummy1();
 		$dummy3 = new NullDummy3();
 		
-		$instance = $di->create(ConstructorInjectionClass::class, $dummy1, $dummy3);
-		$this->assertInstanceOf(ConstructorInjectionClass::class, $instance);
-		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
-		$this->assertInstanceOf(Dummy2Interface::class, $instance->dummy2);
-		$this->assertInstanceOf(Dummy3Interface::class, $instance->dummy3);
+		$instance = $di->create('birkholz\\di\\tests\\ConstructorInjectionClass', $dummy1, $dummy3);
+		$this->assertInstanceOf('birkholz\\di\\tests\\ConstructorInjectionClass', $instance);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy1Interface', $instance->dummy1);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy2Interface', $instance->dummy2);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy3Interface', $instance->dummy3);
 		$this->assertSame($dummy1, $instance->dummy1);
 		$this->assertSame($dummy3, $instance->dummy3);
 	}
@@ -69,17 +62,17 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function testConstructorInjectionWithParameters() {
-		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
+		$di = new DependencyContainer();
 		
 		$dummy2 = new DefaultDummy2Impl();
 		$config1 = new DefaultDummy4();
 		$config2 = "Foo";
 		
-		$instance = $di->create(ConstructorInjectionClassWithAdditionalParams::class, $config1, $dummy2, $config2);
-		$this->assertInstanceOf(ConstructorInjectionClassWithAdditionalParams::class, $instance);
-		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
-		$this->assertInstanceOf(Dummy2Interface::class, $instance->dummy2);
-		$this->assertInstanceOf(Dummy3Interface::class, $instance->dummy3);
+		$instance = $di->create('birkholz\\di\\tests\\ConstructorInjectionClassWithAdditionalParams', $config1, $dummy2, $config2);
+		$this->assertInstanceOf('birkholz\\di\\tests\\ConstructorInjectionClassWithAdditionalParams', $instance);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy1Interface', $instance->dummy1);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy2Interface', $instance->dummy2);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy3Interface', $instance->dummy3);
 		$this->assertSame($dummy2, $instance->dummy2);
 		$this->assertSame($config1, $instance->config1);
 		$this->assertSame($config2, $instance->config2);
@@ -92,9 +85,9 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 	 * @expectedException \Exception
 	 */
 	public function testConstructorInjectionWithFewParameters() {
-		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
+		$di = new DependencyContainer();
 		
-		$instance = $di->create(ConstructorInjectionClassWithAdditionalParams::class);
+		$instance = $di->create('birkholz\\di\\tests\\ConstructorInjectionClassWithAdditionalParams');
 	}
 	
 	/**
@@ -103,11 +96,11 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 	 * @test
 	 */
 	public function testConstructorInjectionWithOptionalParameters() {
-		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
+		$di = new DependencyContainer();
 		
-		$instance = $di->create(ConstructorInjectionClassWithOptionalParameters::class);
-		$this->assertInstanceOf(ConstructorInjectionClassWithOptionalParameters::class, $instance);
-		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
+		$instance = $di->create('birkholz\\di\\tests\\ConstructorInjectionClassWithOptionalParameters');
+		$this->assertInstanceOf('birkholz\\di\\tests\\ConstructorInjectionClassWithOptionalParameters', $instance);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy1Interface', $instance->dummy1);
 		$this->assertNull($instance->dummy4);
 		$this->assertNull($instance->config1);
 	}

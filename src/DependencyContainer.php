@@ -34,6 +34,8 @@ class DependencyContainer {
 		$this->implementationFinder = new DefaultImplementationFinder();
 	}
 	
+	private $constructors = [];
+	
 	/**
 	 * Factory method to create a new object of the supplied class or interface $dependencyName.
 	 * Additional parameters are supplied as parameters to the constructor of the dependency.
@@ -67,74 +69,20 @@ class DependencyContainer {
 			throw new \RuntimeException('Required dependency "' . $dependencyName . '" is no class or interface to satisfy.');
 		}
 		
+		if (!isset($this->constructors[$className])) {
+			$this->constructors[$className] = [new ConstructorInjectionFactory($className), 'create'];
+		}
+		
 		// Supplied arguments for the constructor
 		if (\func_num_args() > 1) {
-			$suppliedArgs = \func_get_args();
-			\array_shift($suppliedArgs);
+			$constructorArgs = \func_get_args();
+			\array_shift($constructorArgs);
 		} else {
-			$suppliedArgs = [];
+			$constructorArgs = [];
 		}
 		
-		// Real argument list used for the constructor
-		$realArgs = [];
-		
-		// Use reflection to find constructor parameters and then invoke the constructor
-		$reflectionClass = new \ReflectionClass($className);
-		
-		// No constructor exists, so just instantiate the class
-		if (null === ($constructor = $reflectionClass->getConstructor())) {
-			$this->logger->debug('No constructor found, creating new instance.');
-			return $reflectionClass->newInstanceArgs($suppliedArgs);
-		}
-		$parameters = $constructor->getParameters();
-		
-		/* @var $parameter \ReflectionParameter */
-		foreach ($parameters as $parameter) {
-			// Check if the parameter is typehinted. If yes, check if the next supplied parameter fulfills the hint, otherwise load the dependency
-			if (null !== ($requiredClass = $parameter->getClass())) {
-				if (isset($suppliedArgs[0]) && is_object($suppliedArgs[0]) && $requiredClass->isInstance($suppliedArgs[0])) {
-					$this->logger->debug('Using a supplied argument for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-					$realArgs[] = \array_shift($suppliedArgs);
-				}
-				
-				else {
-					$this->logger->debug('Fetching dependency "' . $requiredClass->getName() . '" for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-					if (false !== ($dependencyInstance = $this->tryCreate($requiredClass->getName()))) {
-						$realArgs[] = $dependencyInstance;
-					}
-					
-					elseif ($parameter->isOptional()) {
-						$this->logger->debug('Using NULL for optional parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-						$realArgs[] = null;
-					}
-					
-					else {
-						throw new \RuntimeException('Can not resolve dependency for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-					}
-				}
-			}
-			
-			// Just pass the parameter
-			else {
-				if (isset($suppliedArgs[0])) {
-					$this->logger->debug('Using a supplied argument for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-					$realArgs[] = \array_shift($suppliedArgs);
-				}
-				
-				elseif ($parameter->isOptional()) {
-					$this->logger->debug('Using NULL for optional parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-					$realArgs[] = null;
-				}
-				
-				else {
-					throw new \RuntimeException('No value supplied for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-				}
-			}
-		}
-		
-		$this->logger->debug('Creating new instance of class "' . $reflectionClass->getName() . '" using ' . \count($realArgs) . ' parameters.');
-		$instance = $reflectionClass->newInstanceArgs($realArgs);
-		return $instance;
+		$injected = [];
+		return $this->constructors[$className]($this, $injected, $constructorArgs);
 	}
 	
 	/**

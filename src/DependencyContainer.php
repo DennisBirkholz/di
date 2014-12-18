@@ -117,7 +117,7 @@ class DependencyContainer {
 		}
 		
 		$injected = array();
-		return \call_user_func_array($constructor, [$this, &$injected, $constructorArgs]);
+		return \call_user_func_array($constructor, array($this, &$injected, $constructorArgs));
 	}
 	
 	/**

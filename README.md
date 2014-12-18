@@ -2,7 +2,9 @@ Dependency Injection Container for PHP
 ======================================
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE)
-[![Build Status](https://img.shields.io/travis/dennisbirkholz/di/master.svg?style=flat-square)](https://travis-ci.org/thephpleague/period)
+[![Build Status](https://img.shields.io/travis/dennisbirkholz/di/master.svg?style=flat-square)](https://travis-ci.org/dennisbirkholz/di)
+[![Coverage Status](https://img.shields.io/scrutinizer/coverage/g/dennisbirkholz/di.svg?style=flat-square)](https://scrutinizer-ci.com/g/dennisbirkholz/di/code-structure)
+[![Quality Score](https://img.shields.io/scrutinizer/g/dennisbirkholz/di.svg?style=flat-square)](https://scrutinizer-ci.com/g/dennisbirkholz/di)
 
 The idea
 ========

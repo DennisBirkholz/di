@@ -40,9 +40,16 @@ class DependencyContainer {
 	 * Factory callback for a dependency.
 	 * DependencyName=>constructor callback mapping.
 	 * 
-	 * @var array<callable>
+	 * @var array<FactoryInterface>
 	 */
 	private $constructors = array();
+	
+	/**
+	 * List of injectors per dependency.
+	 * 
+	 * @var array<array<InjectorInterface>>
+	 */
+	private $injectors = array();
 	
 	/**
 	 * Flag to mark dependencies as singletons.
@@ -117,7 +124,17 @@ class DependencyContainer {
 		}
 		
 		$injected = array();
-		return \call_user_func_array($constructor, array($this, &$injected, $constructorArgs));
+		$object = \call_user_func_array($constructor, array($this, &$injected, $constructorArgs));
+		
+		if (!isset($this->injectors[$dependencyName])) {
+			$this->injectors[$dependencyName] = $this->injectorFactory($dependencyName);
+		}
+		
+		foreach ($this->injectors[$dependencyName] as $injector) {
+			$injector($this, $object, $injected);
+		}
+		
+		return $object;
 	}
 	
 	/**
@@ -312,5 +329,17 @@ class DependencyContainer {
 		else {
 			return new ConstructorInjectionFactory($dependencyName);
 		}
+	}
+	
+	/**
+	 * This factory method constructs a SetterInjector and an InterfaceInjector for each dependency.
+	 * 
+	 * @param string $dependencyName
+	 * @return array<InjectorInterface>
+	 */
+	private function injectorFactory($dependencyName) {
+		$injectors = array();
+		$injectors[] = new SetterInjector($dependencyName);
+		return $injectors;
 	}
 }

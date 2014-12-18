@@ -216,4 +216,25 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 		
 		$this->assertFalse($di->tryGet('birkholz\\di\\dummy\\Dummy4Interface'));
 	}
+	
+	/**
+	 * Test setter injection.
+	 * Verify dependencies injected in the constructor are not injected with setters again.
+	 * 
+	 * @test
+	 */
+	public function testSetterInjection() {
+		$di = new DependencyContainer();
+		
+		$dummy1 = new DefaultDummy1();
+		$dummy1_created = $di->get('birkholz\\di\\dummy\\DefaultDummy1');
+		$this->assertNotSame($dummy1, $dummy1_created);
+		
+		$instance = $di->create('birkholz\\di\\tests\\SetterInjectionTest', $dummy1);
+		$this->assertInstanceOf('birkholz\\di\\tests\\SetterInjectionTest', $instance);
+		$this->assertSame($instance->dummy1, $dummy1);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy1Interface', $instance->dummy1);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy2Interface', $instance->dummy2);
+		$this->assertInstanceOf('birkholz\\di\\dummy\\Dummy3Interface', $instance->dummy3);
+	}
 }

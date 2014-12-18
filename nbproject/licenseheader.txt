@@ -1,0 +1,12 @@
+<#if licenseFirst??>
+${licenseFirst}
+</#if>
+${licensePrefix}This file is part of the birkholz/di package.
+${licensePrefix}
+${licensePrefix}Copyright (c) ${user}
+${licensePrefix}
+${licensePrefix}For the full copyright and license information, please view the LICENSE
+${licensePrefix}file that was distributed with this source code.
+<#if licenseLast??>
+${licenseLast}
+</#if>

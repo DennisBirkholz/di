@@ -149,7 +149,7 @@ class DependencyContainer {
 		
 		// Dependency is a class, so create a factory and use that
 		if (\class_exists($dependencyName)) {
-			$this->constructors[$dependencyName] = [new ConstructorInjectionFactory($dependencyName), 'create'];
+			$this->constructors[$dependencyName] = array(new ConstructorInjectionFactory($dependencyName), 'create');
 			return $this->constructors[$dependencyName];
 		}
 		

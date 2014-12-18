@@ -123,23 +123,18 @@ class DependencyContainer {
 	/**
 	 * Get a callable method for the supplied dependency name
 	 * 
+	 * @param string $dependencyName
 	 * @return callable
 	 */
-	private function resolveConstructor($dependencyName, $final = false) {
+	private function resolveConstructor($dependencyName) {
 		// Constructor is set for the dependency
 		if (isset($this->constructors[$dependencyName])) {
 			return $this->constructors[$dependencyName];
 		}
 		
 		if (isset($this->factories[$dependencyName])) {
-			// FIXME: use CallableFactory
-			// $this->constructors[$dependencyName] = new CallableFactory($dependencyName, $this->factories[$dependencyName]);
-			//return $this->constructors[$dependencyName];
-			throw new \RuntimeException('Not implemented yet');
-		}
-		
-		if ($final) {
-			throw new \RuntimeException('Can not find factory for dependency "' . $dependencyName . '"');
+			$this->constructors[$dependencyName] = array(new CallbackFactory($dependencyName, $this->factories[$dependencyName]), 'create');
+			return $this->constructors[$dependencyName];
 		}
 		
 		// The dependency can be satisfied by another dependency, so try that constructor
@@ -162,7 +157,7 @@ class DependencyContainer {
 			return $this->resolveConstructor($className);
 		}
 		
-		throw new \RuntimeException('Required dependency "' . $dependencyName . '" is no class or interface to satisfy it.');
+		throw new \RuntimeException('Required dependency "' . $dependencyName . '" has no class or interface to satisfy it.');
 	}
 	
 	
@@ -257,7 +252,7 @@ class DependencyContainer {
 			throw new \RuntimeException('Can not change factory method for already instantiated singleton "' . $dependencyName . '".');
 		}
 		
-		$this->factories[$dependencyName] = array(new CallbackFactory($dependencyName, $factory), 'create');
+		$this->factories[$dependencyName] = $factory;
 		unset($this->constructors[$dependencyName]);
 		
 		return $this;

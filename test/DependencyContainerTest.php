@@ -104,4 +104,116 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 		$this->assertNull($instance->dummy4);
 		$this->assertNull($instance->config1);
 	}
+	
+	/**
+	 * Try to create an invalid class
+	 * 
+	 * @test
+	 * @expectedException \Exception
+	 */
+	public function testCreateInvalidClass() {
+		$di = new DependencyContainer();
+		$di->create('birkholz\\di\\dummy\\NotExistingClass');
+	}
+	
+	/**
+	 * 
+	 * @test
+	 * @require PHP 5.4
+	 */
+	public function testFactory() {
+		$di = new DependencyContainer();
+		
+		$di->factory('birkholz\\di\\dummy\\DefaultDummy1', function() {
+			return new DefaultDummy1();
+		});
+		
+		$dummy1 = $di->create('birkholz\\di\\dummy\\DefaultDummy1');
+		$this->assertInstanceOf('birkholz\\di\\dummy\\DefaultDummy1', $dummy1);
+		
+		$dummy2 = $di->create('birkholz\\di\\dummy\\DefaultDummy1');
+		$this->assertInstanceOf('birkholz\\di\\dummy\\DefaultDummy1', $dummy2);
+		
+		$this->assertNotSame($dummy1, $dummy2);
+	}
+	
+	/**
+	 * @test
+	 */
+	public function testConfig() {
+		$di = new DependencyContainer();
+		
+		$r = $di->config('var1', 'test');
+		$this->assertSame($r, $di);
+		$this->assertEquals($di->config('var1'), 'test');
+	}
+	
+	/**
+	 * @test
+	 * @expectedException \Exception
+	 */
+	public function testConfigInvalid() {
+		$di = new DependencyContainer();
+		$di->config('Invalid');
+	}
+	
+	/**
+	 * @test
+	 */
+	public function testUses() {
+		$di = new DependencyContainer();
+		$di->uses('birkholz\\di\\dummy\\Dummy1Interface', 'birkholz\\di\\dummy\\DefaultDummy2Impl');
+		
+		$obj = $di->create('birkholz\\di\\dummy\\Dummy1Interface');
+		$this->assertInstanceOf('birkholz\\di\\dummy\\DefaultDummy2Impl', $obj);
+	}
+	
+	/**
+	 * Get will return the same instance over and over
+	 * 
+	 * @test
+	 */
+	public function testGet() {
+		$di = new DependencyContainer();
+		
+		$obj1 = $di->get('birkholz\\di\\dummy\\Dummy1Interface');
+		$obj2 = $di->get('birkholz\\di\\dummy\\Dummy1Interface');
+		$this->assertSame($obj1, $obj2);
+	}
+	
+	/**
+	 * tryGet will return the same instance over and over
+	 * 
+	 * @test
+	 * @expectedException \Exception
+	 */
+	public function testGetError() {
+		$di = new DependencyContainer();
+		
+		$di->get('birkholz\\di\\dummy\\Dummy4Interface');
+	}
+	
+	/**
+	 * tryGet will return the same instance over and over
+	 * 
+	 * @test
+	 */
+	public function testTryGet() {
+		$di = new DependencyContainer();
+		
+		$obj1 = $di->tryGet('birkholz\\di\\dummy\\Dummy1Interface');
+		$obj2 = $di->tryGet('birkholz\\di\\dummy\\Dummy1Interface');
+		$this->assertSame($obj1, $obj2);
+	}
+	
+	/**
+	 * tryGet will return the same instance over and over
+	 * 
+	 * @test
+	 */
+	public function testTryGetError() {
+		$di = new DependencyContainer();
+		
+		$this->assertFalse($di->tryGet('birkholz\\di\\dummy\\Dummy4Interface'));
+	}
 }

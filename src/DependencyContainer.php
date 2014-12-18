@@ -28,13 +28,67 @@ class DependencyContainer {
 	 */
 	private $implementationFinder;
 	
+	/**
+	 * Factory callable supplied by the user.
+	 * DependencyName=>factory callback mapping
+	 * 
+	 * @var array<callable>
+	 */
+	private $factories = [];
+	
+	/**
+	 * Factory callback for a dependency.
+	 * DependencyName=>constructor callback mapping.
+	 * 
+	 * @var array<callable>
+	 */
+	private $constructors = [];
+	
+	/**
+	 * Flag to mark dependencies as singletons.
+	 * DependencyName => isSingleton mapping.
+	 * 
+	 * @var array<boolean>
+	 */
+	private $singleton = [];
+	
+	/**
+	 * Provides a mapping of a dependency is locked and can not be changed.
+	 * DependencyName => isLocked mapping.
+	 * 
+	 * @var array<boolean>
+	 */
+	private $locked = [];
+	
+	/**
+	 * Provides a mapping from dependency names to the names of classes that can be instantiated.
+	 * DependencyName => ClassName mapping.
+	 * 
+	 * @var array<string>
+	 */
+	private $implementations = [];
+	
+	/**
+	 * List of created objects.
+	 * DependencyName => object instance mapping
+	 * 
+	 * @var array<object>
+	 */
+	private $instances = [];
+	
+	/**
+	 * List of configuration parameters stored in the container.
+	 * 
+	 * @var array<string>
+	 */
+	private $config = [];
+	
+	
 	
 	public function __construct(LoggerInterface $logger = null) {
 		$this->logger = ($logger ?: new NullLogger);
 		$this->implementationFinder = new DefaultImplementationFinder();
 	}
-	
-	private $constructors = [];
 	
 	/**
 	 * Factory method to create a new object of the supplied class or interface $dependencyName.
@@ -49,29 +103,10 @@ class DependencyContainer {
 	 * @param mixed $constructorArg1
 	 * @param mixed $constructorArg2
 	 * @return object New object of the supplied class or interface $dependencyName
+	 * @api
 	 */
 	public function create($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
-		// Check if the supplied dependency name is an interface
-		if (\interface_exists($dependencyName)) {
-			if (false === ($className = $this->implementationFinder->findImplementation($dependencyName))) {
-				throw new \RuntimeException('Required dependency "' . $dependencyName . '" has no default class.');
-			}
-			
-			$this->logger->debug('Required dependency "' . $dependencyName . '" is fulfilled by default class "' . $className . '"');
-		}
-		
-		elseif (\class_exists($dependencyName)) {
-			$this->logger->debug('Required dependency "' . $dependencyName . '" is a class, try to create it.');
-			$className = $dependencyName;
-		}
-		
-		else {
-			throw new \RuntimeException('Required dependency "' . $dependencyName . '" is no class or interface to satisfy.');
-		}
-		
-		if (!isset($this->constructors[$className])) {
-			$this->constructors[$className] = [new ConstructorInjectionFactory($className), 'create'];
-		}
+		$constructor = $this->resolveConstructor($dependencyName);
 		
 		// Supplied arguments for the constructor
 		if (\func_num_args() > 1) {
@@ -82,8 +117,54 @@ class DependencyContainer {
 		}
 		
 		$injected = [];
-		return $this->constructors[$className]($this, $injected, $constructorArgs);
+		return $constructor($this, $injected, $constructorArgs);
 	}
+	
+	/**
+	 * Get a callable method for the supplied dependency name
+	 * 
+	 * @return callable
+	 */
+	private function resolveConstructor($dependencyName, $final = false) {
+		// Constructor is set for the dependency
+		if (isset($this->constructors[$dependencyName])) {
+			return $this->constructors[$dependencyName];
+		}
+		
+		if (isset($this->factories[$dependencyName])) {
+			// FIXME: use CallableFactory
+			// $this->constructors[$dependencyName] = new CallableFactory($dependencyName, $this->factories[$dependencyName]);
+			//return $this->constructors[$dependencyName];
+			throw new \RuntimeException('Not implemented yet');
+		}
+		
+		if ($final) {
+			throw new \RuntimeException('Can not find factory for dependency "' . $dependencyName . '"');
+		}
+		
+		// The dependency can be satisfied by another dependency, so try that constructor
+		if (isset($this->implementations[$dependencyName])) {
+			return $this->resolveConstructor($this->implementations[$dependencyName]);
+		}
+		
+		// Dependency is a class, so create a factory and use that
+		if (\class_exists($dependencyName)) {
+			$this->constructors[$dependencyName] = [new ConstructorInjectionFactory($dependencyName), 'create'];
+			return $this->constructors[$dependencyName];
+		}
+		
+		// Check if the supplied dependency name is an interface
+		if (\interface_exists($dependencyName)) {
+			if (false === ($className = $this->implementationFinder->findImplementation($dependencyName))) {
+				throw new \RuntimeException('Required dependency "' . $dependencyName . '" has no default class.');
+			}
+			
+			return $this->resolveConstructor($className);
+		}
+		
+		throw new \RuntimeException('Required dependency "' . $dependencyName . '" is no class or interface to satisfy it.');
+	}
+	
 	
 	/**
 	 * Factory method to create a new object of the supplied class or interface $dependencyName.
@@ -97,15 +178,112 @@ class DependencyContainer {
 	 * @param string $dependencyName The fully qualified interface/class name of the object to create.
 	 * @param mixed $constructorArg1
 	 * @param mixed $constructorArg2
-	 * @return boolean|object New object of the supplied class or interface $dependencyName
+	 * @return object|false New object of the supplied class or interface $dependencyName
+	 * @api
 	 */
 	public function tryCreate($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
 		try {
 			return \call_user_func_array([$this, 'create'], \func_get_args());
+		} catch (\Exception $ex) {
+			return false;
+		}
+	}
+	
+	/**
+	 * Get an object instance that fulfills the dependency.
+	 * 
+	 * @param string $dependencyName
+	 * @return object An instance for the dependency
+	 * @api
+	 */
+	public function get($dependencyName) {
+		if (!isset($this->instances[$dependencyName])) {
+			$this->instances[$dependencyName] = $this->create($dependencyName);
 		}
 		
-		catch (\Exception $ex) {
+		return $this->instances[$dependencyName];
+	}
+	
+	/**
+	 * 
+	 * @param string $dependencyName
+	 * @return object|false An instance for the dependency
+	 * @api
+	 */
+	public function tryGet($dependencyName) {
+		try {
+			return $this->get($dependencyName);
+		} catch (Exception $ex) {
 			return false;
+		}
+	}
+	
+	/**
+	 * Mark a specific dependency to be a singleton.
+	 * Only one instance of the singleton can be constructed. Successive create() calls will fail.
+	 * Be sure to always receive the singleton with the get() method.
+	 * 
+	 * The second parameter can be either false to clear a previously set $singleton flag
+	 * or a callable that is to be used as the factory if the singleton is not yet instantiated.
+	 * 
+	 * @param string $dependencyName
+	 * @param callable|false $factoryMethodOrDisable
+	 * @return DependencyContainer $this for chaining
+	 * @api
+	 */
+	public function singleton($dependencyName, $factoryMethodOrDisable = null) {
+		if ($factoryMethodOrDisable === false) {
+			unset($this->singleton[$dependencyName]);
+			return $this;
+		}
+		
+		$this->singleton[$dependencyName] = true;
+		if (is_callable($factoryMethodOrDisable)) {
+			$this->factory($dependencyName, $factoryMethodOrDisable);
+		}
+		return $this;
+	}
+	
+	/**
+	 * Register a factory method for the supplied dependency name
+	 * 
+	 * @param string $dependencyName
+	 * @param callable $factory
+	 * @return DependencyContainer $this for chaining
+	 * @api
+	 */
+	public function factory($dependencyName, callable $factory) {
+		if (isset($this->singleton[$dependencyName]) && isset($this->instances[$dependencyName])) {
+			throw new \RuntimeException('Can not change factory method for already instantiated singleton "' . $dependencyName . '".');
+		}
+		
+		$this->factories[$dependencyName] = [new CallbackFactory($dependencyName, $factory), 'create'];
+		unset($this->constructors[$dependencyName]);
+		
+		return $this;
+	}
+	
+	/**
+	 * Get or set a config variable.
+	 * If only the $name parameter is supplied, the value of that variable is returned.
+	 * An exception is thrown if the parameter has not been set before.
+	 * If both parameters are supplied, the $value is stored and $this is returned for chaining.
+	 * 
+	 * @param string $name
+	 * @param mixed $value
+	 * @return DependencyContainer|mixed
+	 */
+	public function config($name, $value = null) {
+		if ($value === null) {
+			if (!isset($this->config[$name])) {
+				throw new \RuntimeException('Unknown config variable "' . $name . '".');
+			}
+			return $this->config[$name];
+		}
+		
+		else {
+			$this->config[$name] = $value;
+			return $this;
 		}
 	}
 }

@@ -1,0 +1,11 @@
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/4.3/phpunit.xsd"
+	bootstrap="test/bootstrap.php"
+>
+	<filter>
+		<blacklist>
+			<directory suffix=".php">vendor/</directory>
+		</blacklist>
+	</filter>
+</phpunit>

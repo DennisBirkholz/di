@@ -1,0 +1,20 @@
+{
+	"name": "dennisbirkholz/di",
+	"description": "Dependency Injection Container",
+	
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	
+	"authors": [
+		{
+			"name": "Dennis Birkholz",
+			"email": "dennis@birkholz.biz"
+		}
+	],
+	
+	"autoload": {
+		"psr-4": {
+			"birkholz\\di\\": "src/"
+		}
+	}
+}

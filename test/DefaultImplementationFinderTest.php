@@ -31,13 +31,14 @@ class DefaultImplementationFinderTest extends \PHPUnit_Framework_TestCase {
 		
 		$ns = 'birkholz\\di\\dummy\\';
 		
-		$combinations = [
-			[ 'Dummy1Interface', 'DefaultDummy1', ],
-			[ 'Dummy2Interface', 'DefaultDummy2Impl', ],
-			[ 'Dummy3Interface', 'NullDummy3', ],
-		];
+		$combinations = array(
+			array( 'Dummy1Interface', 'DefaultDummy1', ),
+			array( 'Dummy2Interface', 'DefaultDummy2Impl', ),
+			array( 'Dummy3Interface', 'NullDummy3', ),
+		);
 		
-		foreach ($combinations as list($interface, $class)) {
+		foreach ($combinations as $combination) {
+			list($interface, $class) = $combination;
 			$this->assertEquals($ns.$class, $finder->findImplementation($ns.$interface));
 		}
 	}

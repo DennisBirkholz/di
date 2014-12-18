@@ -41,19 +41,18 @@ class DependencyContainer {
 	 * Type hinted constructor parameters are used from the optional parameters if the type matches.
 	 * Otherwise the container tries to fulfill that dependency.
 	 * 
-	 * If the dependency can not be fulfilled, false is returned.
+	 * If the dependency can not be fulfilled, an exception is thrown.
 	 * 
 	 * @param string $dependencyName The fully qualified interface/class name of the object to create.
 	 * @param mixed $constructorArg1
 	 * @param mixed $constructorArg2
-	 * @return boolean|object New object of the supplied class or interface $dependencyName
+	 * @return object New object of the supplied class or interface $dependencyName
 	 */
-	public function tryCreate($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
+	public function create($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
 		// Check if the supplied dependency name is an interface
 		if (\interface_exists($dependencyName)) {
 			if (false === ($className = $this->implementationFinder->findImplementation($dependencyName))) {
-				$this->logger->debug('Required dependency "' . $dependencyName . '" has no default class.');
-				return false;
+				throw new \RuntimeException('Required dependency "' . $dependencyName . '" has no default class.');
 			}
 			
 			$this->logger->debug('Required dependency "' . $dependencyName . '" is fulfilled by default class "' . $className . '"');
@@ -65,8 +64,7 @@ class DependencyContainer {
 		}
 		
 		else {
-			$this->logger->debug('Required dependency "' . $dependencyName . '" is no class or interface to satisfy.');
-			return false;
+			throw new \RuntimeException('Required dependency "' . $dependencyName . '" is no class or interface to satisfy.');
 		}
 		
 		// Supplied arguments for the constructor
@@ -105,22 +103,32 @@ class DependencyContainer {
 						$realArgs[] = $dependencyInstance;
 					}
 					
-					elseif ($parameter->allowsNull()) {
+					elseif ($parameter->isOptional()) {
 						$this->logger->debug('Using NULL for optional parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
 						$realArgs[] = null;
 					}
 					
 					else {
-						$this->logger->debug('Can not resolve dependency for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-						return false;
+						throw new \RuntimeException('Can not resolve dependency for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
 					}
 				}
 			}
 			
 			// Just pass the parameter
 			else {
-				$this->logger->debug('Using a supplied argument for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
-				$realArgs[] = \array_shift($suppliedArgs);
+				if (isset($suppliedArgs[0])) {
+					$this->logger->debug('Using a supplied argument for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
+					$realArgs[] = \array_shift($suppliedArgs);
+				}
+				
+				elseif ($parameter->isOptional()) {
+					$this->logger->debug('Using NULL for optional parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
+					$realArgs[] = null;
+				}
+				
+				else {
+					throw new \RuntimeException('No value supplied for parameter #' . ($parameter->getPosition()+1) . ' $' . $parameter->getName() . '');
+				}
 			}
 		}
 		
@@ -136,18 +144,20 @@ class DependencyContainer {
 	 * Type hinted constructor parameters are used from the optional parameters if the type matches.
 	 * Otherwise the container tries to fulfill that dependency.
 	 * 
-	 * If the dependency can not be fulfilled, an exception is thrown.
+	 * If the dependency can not be fulfilled, false is returned.
 	 * 
 	 * @param string $dependencyName The fully qualified interface/class name of the object to create.
 	 * @param mixed $constructorArg1
 	 * @param mixed $constructorArg2
-	 * @return object New object of the supplied class or interface $dependencyName
+	 * @return boolean|object New object of the supplied class or interface $dependencyName
 	 */
-	public function create($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
-		if (false === ($instance = \call_user_func_array([$this, 'tryCreate'], \func_get_args()))) {
-			throw new \RuntimeException('Can not create new instance for dependency "' . $dependencyName . '"');
+	public function tryCreate($dependencyName, $constructorArg1 = null, $constructorArg2 = null) {
+		try {
+			return \call_user_func_array([$this, 'create'], \func_get_args());
 		}
 		
-		return $instance;
+		catch (\Exception $ex) {
+			return false;
+		}
 	}
 }

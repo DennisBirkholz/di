@@ -35,8 +35,7 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 	public function testConstructorInjection() {
 		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
 		
-		$instance = $di->tryCreate(ConstructorInjectionClass::class);
-		$this->assertNotFalse($instance);
+		$instance = $di->create(ConstructorInjectionClass::class);
 		$this->assertInstanceOf(ConstructorInjectionClass::class, $instance);
 		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
 		$this->assertInstanceOf(Dummy2Interface::class, $instance->dummy2);
@@ -55,8 +54,7 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 		$dummy1 = new DefaultDummy1();
 		$dummy3 = new NullDummy3();
 		
-		$instance = $di->tryCreate(ConstructorInjectionClass::class, $dummy1, $dummy3);
-		$this->assertNotFalse($instance);
+		$instance = $di->create(ConstructorInjectionClass::class, $dummy1, $dummy3);
 		$this->assertInstanceOf(ConstructorInjectionClass::class, $instance);
 		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
 		$this->assertInstanceOf(Dummy2Interface::class, $instance->dummy2);
@@ -65,6 +63,11 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 		$this->assertSame($dummy3, $instance->dummy3);
 	}
 	
+	/**
+	 * Supply additional parameters that are passed to the constructor with one provided dependency in between.
+	 * 
+	 * @test
+	 */
 	public function testConstructorInjectionWithParameters() {
 		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
 		
@@ -72,8 +75,7 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 		$config1 = new DefaultDummy4();
 		$config2 = "Foo";
 		
-		$instance = $di->tryCreate(ConstructorInjectionClassWithAdditionalParams::class, $config1, $dummy2, $config2);
-		$this->assertNotFalse($instance);
+		$instance = $di->create(ConstructorInjectionClassWithAdditionalParams::class, $config1, $dummy2, $config2);
 		$this->assertInstanceOf(ConstructorInjectionClassWithAdditionalParams::class, $instance);
 		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
 		$this->assertInstanceOf(Dummy2Interface::class, $instance->dummy2);
@@ -83,11 +85,27 @@ class DependencyContainerTest extends \PHPUnit_Framework_TestCase {
 		$this->assertSame($config2, $instance->config2);
 	}
 	
+	/**
+	 * Do not provide a required parameter.
+	 * 
+	 * @test
+	 * @expectedException \Exception
+	 */
+	public function testConstructorInjectionWithFewParameters() {
+		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
+		
+		$instance = $di->create(ConstructorInjectionClassWithAdditionalParams::class);
+	}
+	
+	/**
+	 * Skip optional parameters.
+	 * 
+	 * @test
+	 */
 	public function testConstructorInjectionWithOptionalParameters() {
 		$di = new DependencyContainer(new \Monolog\Logger('default', [new \Monolog\Handler\ErrorLogHandler]));
 		
-		$instance = $di->tryCreate(ConstructorInjectionClassWithOptionalParameters::class);
-		$this->assertNotFalse($instance);
+		$instance = $di->create(ConstructorInjectionClassWithOptionalParameters::class);
 		$this->assertInstanceOf(ConstructorInjectionClassWithOptionalParameters::class, $instance);
 		$this->assertInstanceOf(Dummy1Interface::class, $instance->dummy1);
 		$this->assertNull($instance->dummy4);

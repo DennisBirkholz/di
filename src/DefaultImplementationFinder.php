@@ -73,7 +73,8 @@ class DefaultImplementationFinder {
 		];
 		
 		// Check if constructed class names exist and implement the interface
-		foreach ($preAndPostfixes as list($prefix, $postfix)) {
+		foreach ($preAndPostfixes as $preAndPostfix) {
+			list($prefix, $postfix) = $preAndPostfix;
 			$fqcn = $namespace . $prefix . $basename . $postfix;
 			$this->logger->debug('Checking class "' . $fqcn . '"');
 			
